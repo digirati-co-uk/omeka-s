@@ -14,4 +14,6 @@
 /node_modules/
 .sass-cache
 .DS_Store
+docker/build/.gitkeep
+docker/build
 /application/language/debug.*
