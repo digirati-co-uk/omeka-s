@@ -12,7 +12,7 @@ class LoggerFactoryTest extends TestCase
     protected $validConfig = [
         'logger' => [
             'log' => true,
-            'path' => '/',
+            'path' => '/dev/stdout',
             'priority' => Logger::NOTICE,
         ],
     ];
