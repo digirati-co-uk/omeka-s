@@ -52,12 +52,14 @@ RUN cd /var/www/html && \
 
 COPY . /var/www/html
 
-COPY ./docker/configs/database.ini /var/www/html/config/database.ini
+COPY ./docker/php/database.ini /var/www/html/config/database.ini
 
 RUN cd /var/www/html && ./node_modules/gulp/bin/gulp.js init
 
 COPY ./docker/configs/server/scripts/runtime/${configureServer} \
      /runtime/${configureServer}
+
+COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
 
 EXPOSE 80 443
 
