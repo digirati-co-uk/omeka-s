@@ -33,12 +33,12 @@ abstract class AbstractResourceRepresentation extends AbstractRepresentation
      */
     abstract public function getJsonLd();
 
-     /**
-      * Get the linked data type or types for this resource
-      *
-      * @return string|array|null
-      */
-     abstract public function getJsonLdType();
+    /**
+     * Get the linked data type or types for this resource
+     *
+     * @return string|array|null
+     */
+    abstract public function getJsonLdType();
 
     /**
      * Construct the resource representation object.
@@ -236,6 +236,23 @@ abstract class AbstractResourceRepresentation extends AbstractRepresentation
             $attributeStr .= ' ' . $key . '="' . $escapeHtml($value) . '"';
         }
         return "<a$attributeStr>" . $escapeHtml($text) . '</a>';
+    }
+
+    /**
+     * Get a URL to a stored file.
+     *
+     * @param string $prefix The storage prefix
+     * @param string $name The file name, or basename if extension is passed
+     * @param null|string $extension The file extension
+     */
+    public function getFileUrl($prefix, $name, $extension = null)
+    {
+        $store = $this->getServiceLocator()->get('Omeka\File\Store');
+        if (null !== $extension) {
+            $extension = ".$extension";
+        }
+        $storagePath = sprintf('%s/%s%s', $prefix, $name, $extension);
+        return $store->getUri($storagePath);
     }
 
     /**

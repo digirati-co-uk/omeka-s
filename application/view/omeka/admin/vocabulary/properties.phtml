@@ -1,9 +1,9 @@
 <?php
-$this->htmlElement('body')->appendAttribute('class', 'browse');
+$this->htmlElement('body')->appendAttribute('class', 'browse vocabularies vocabulary-properties');
 $escape = $this->plugin('escapeHtml');
 ?>
 
-<?php echo $this->pageTitle(sprintf($this->translate('Properties in “%s”'), $vocabulary->label())); ?>
+<?php echo $this->pageTitle($vocabulary->label(), 1, $this->translate('Vocabularies'), $this->translate('Properties')); ?>
 
 <p><?php echo $escape($this->translate($vocabulary->comment())); ?></p>
 <p><strong><?php echo $this->translate('Prefix:'); ?></strong> <?php echo $escape($vocabulary->prefix()); ?><br>
@@ -13,7 +13,7 @@ $escape = $this->plugin('escapeHtml');
 
 <?php echo $this->pagination(); ?>
 
-<table>
+<table class="tablesaw" data-tablesaw-mode="stack">
     <thead>
         <tr>
             <th><?php echo $this->sortLink($this->translate('Label'), 'label'); ?></th>
@@ -38,7 +38,7 @@ $escape = $this->plugin('escapeHtml');
                 </ul>
             </td>
             <td><?php echo $escape($this->translate($property->term())); ?></td>
-            <td><?php echo $this->hyperlink($property->itemCount(), $this->url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => ["has_property[{$property->id()}]" => 1]])); ?></td>
+            <td><?php echo $this->hyperlink($property->itemCount(), $this->url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => ['property[0][property]' => $property->id(), 'property[0][type]' => 'ex',]])); ?></td>
         </tr>
         <?php endforeach; ?>
     </tbody>

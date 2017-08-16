@@ -9,8 +9,6 @@
 /files/
 /modules/
 /themes/
-/application/language/*.po
-/application/language/*.mo
 /application/test/config/database.ini
 /vendor/
 /node_modules/
@@ -18,3 +16,4 @@
 .DS_Store
 docker/build/.gitkeep
 docker/build
+/application/language/debug.*

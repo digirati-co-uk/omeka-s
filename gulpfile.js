@@ -1,20 +1,23 @@
 'use strict';
 
 var child_process = require('child_process');
-var fs = require('fs');
 var readline = require('readline');
+var path = require('path');
 
 var Promise = require('bluebird');
 var dateFormat = require('dateformat');
-var glob = require('glob');
 var minimist = require('minimist');
-var rimraf = require('rimraf');
-var tmp = require('tmp');
 
 var gulp = require('gulp');
 var replace = require('gulp-replace');
 var rename = require('gulp-rename');
 var zip = require('gulp-zip');
+
+var fs = require('fs');
+Promise.promisifyAll(fs);
+var glob = Promise.promisify(require('glob'));
+var rimraf = Promise.promisify(require('rimraf'));
+var tmpFile = Promise.promisify(require('tmp').file, {multiArgs: true});
 
 var sass = require('gulp-sass');
 var postcss = require('gulp-postcss');
@@ -25,40 +28,42 @@ var buildDir = __dirname + '/build';
 var dataDir = __dirname + '/application/data';
 var scriptsDir = dataDir + '/scripts';
 var langDir = __dirname + '/application/language';
+var pot = langDir + '/template.pot';
 
 var cliOptions = minimist(process.argv.slice(2), {
-    string: 'php-path',
+    string: ['php-path', 'module'],
     boolean: 'dev',
-    default: {'php-path': 'php', 'dev': true}
+    default: {'php-path': 'php', 'dev': true, 'module': null}
 });
 
 function ensureBuildDir() {
-    if (!fs.existsSync(buildDir)) {
-        fs.mkdirSync(buildDir);
-    }
-
-    if (!fs.existsSync(buildDir + '/cache')) {
-        fs.mkdirSync(buildDir + '/cache');
-    }
+    return fs.statAsync(buildDir).catch(function (e) {
+        return fs.mkdirAsync(buildDir);
+    }).then(function () {
+        return fs.statAsync(buildDir + '/cache');
+    }).catch(function (e) {
+        fs.mkdirAsync(buildDir + '/cache');
+    });
 }
 
 function download(url, path) {
-    return new Promise(function (resolve, reject) {
-        ensureBuildDir();
-        var https = require('https');
-        var file = fs.createWriteStream(path);
-        file.on('finish', function () {
-            file.close(resolve());
-        });
-        https.get(url, function (response) {
-            response.pipe(file);
-        }).on('error', function(err) {
-            reject(err);
+    return ensureBuildDir().then(function () {
+        return new Promise(function (resolve, reject) {
+            var https = require('https');
+            var file = fs.createWriteStream(path);
+            file.on('finish', function () {
+                file.close(resolve());
+            });
+            https.get(url, function (response) {
+                response.pipe(file);
+            }).on('error', function(err) {
+                reject(err);
+            });
         });
     });
 }
 
-function runCommand(cmd, args, options) {
+function runCommand(cmd, args, options, resolveWith) {
     return new Promise(function (resolve, reject) {
         if (!options) {
             options = {};
@@ -71,44 +76,77 @@ function runCommand(cmd, args, options) {
                 if (code !== 0) {
                     reject(new Error('Command "' + cmd + '" exited with code ' +  code));
                 } else {
-                    resolve();
+                    resolve(resolveWith);
                 }
             });
     });
 }
 
-function runPhpCommand(cmd, args, options) {
-    return runCommand(cliOptions['php-path'], [cmd].concat(args), options);
+function runPhpCommand(cmd, args, options, resolveWith) {
+    return runCommand(cliOptions['php-path'], [cmd].concat(args), options, resolveWith);
 }
 
 function composer(args) {
     var composerPath = buildDir + '/composer.phar';
     var installerPath = buildDir + '/composer-installer';
     var installerUrl = 'https://getcomposer.org/installer';
-    return new Promise(function (resolve, reject) {
-        fs.stat(composerPath, function(err, stats) {
-            if (!err) {
-                resolve();
-            } else {
-                download(installerUrl, installerPath)
-                    .then(function () {
-                        return runPhpCommand(installerPath, [], {cwd: buildDir})
-                    })
-                    .then(function () {
-                        resolve();
-                    });
-            }
+    var stat = Promise.promisify(fs.stat);
+
+    return stat(composerPath).catch(function (e) {
+        return download(installerUrl, installerPath).then(function () {
+            return runPhpCommand(installerPath, [], {cwd: buildDir});
         });
-    })
-    .then(function () {
+    }).then(function () {
         return runPhpCommand(composerPath, ['self-update']);
-    })
-    .then(function () {
+    }).then(function () {
         if (!cliOptions['dev']) {
             args.push('--no-dev');
         }
         return runPhpCommand(composerPath, args);
     });
+}
+
+function i18nXgettext(dir) {
+    return glob('**/*.{php,phtml}', {ignore: ['themes/**', 'modules/**'], cwd: dir}).then(function (files) {
+        return tmpFile({postfix: 'xgettext.pot'}).spread(function (path, fd) {
+            var args = ['--language=php', '--from-code=utf-8', '--keyword=translate', '-o', path];
+            return runCommand('xgettext', args.concat(files), {cwd: dir}, path);
+        });
+    });
+}
+
+function i18nTaggedStrings(dir) {
+    return tmpFile({postfix: 'tagged.pot'}).spread(function (path, fd) {
+        return runPhpCommand(composerDir + '/extract-tagged-strings.php', [],
+            {stdio: ['pipe', fd, process.stderr], cwd: dir}, path);
+    });
+}
+
+function i18nVocabStrings() {
+    return tmpFile({postfix: 'vocab.pot'}).spread(function (path, fd) {
+        return runPhpCommand(scriptsDir + '/extract-vocab-strings.php', [],
+            {stdio: ['pipe', fd, process.stderr]}, path);
+    });
+}
+
+function getModulePath(module) {
+    if (!module) {
+        return Promise.reject(new Error('No module given! Use --module to specify the module to work on.'));
+    }
+
+    var modulePath = path.join(__dirname, 'modules', module);
+    return fs.statAsync(modulePath).then(function (stats) {
+        if (!stats.isDirectory()) {
+            return Promise.reject(new Error('Invalid module given! (not a directory)'))
+        }
+
+        return modulePath;
+    });
+}
+
+function compileToMo(file) {
+    var outFile = path.join(path.dirname(file), path.basename(file, '.po') + '.mo');
+    return runCommand('msgfmt', [file, '-o', outFile]);
 }
 
 gulp.task('css', function () {
@@ -129,17 +167,19 @@ gulp.task('css:watch', function () {
 
 
 gulp.task('test:cs', function () {
-    ensureBuildDir();
-    return runCommand('vendor/bin/php-cs-fixer', ['fix', '--dry-run', '--verbose', '--diff', '--cache-file=build/cache/.php_cs.cache']);
+    return ensureBuildDir().then(function () {
+        return runCommand('vendor/bin/php-cs-fixer', ['fix', '--dry-run', '--verbose', '--diff', '--cache-file=build/cache/.php_cs.cache']);
+    });
 });
 gulp.task('test:php', function () {
-    ensureBuildDir();
-    return runCommand(composerDir + '/phpunit', [
-        '-d',
-        'date.timezone=America/New_York',
-        '--log-junit',
-        buildDir + '/test-results.xml'
-    ], {cwd: 'application/test'});
+    return ensureBuildDir().then(function () {
+        return runCommand(composerDir + '/phpunit', [
+            '-d',
+            'date.timezone=America/New_York',
+            '--log-junit',
+            buildDir + '/test-results.xml'
+        ], {cwd: 'application/test'});
+    });
 });
 gulp.task('test', gulp.series('test:cs', 'test:php'));
 
@@ -209,51 +249,62 @@ gulp.task('db:create-migration', function () {
 gulp.task('db', gulp.series('db:schema', 'db:proxies'));
 
 gulp.task('i18n:template', function () {
-    var pot = langDir + '/template.pot';
     return Promise.all([
-        new Promise(function(resolve, reject) {
-            glob('**/*.{php,phtml}', {ignore: ['themes/**', 'modules/**']}, function (err, files) {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                tmp.file({postfix: 'xgettext.pot'}, function (err, path, fd) {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    var args = ['--language=php', '--from-code=utf-8', '--keyword=translate', '-o', path];
-                    runCommand('xgettext', args.concat(files)).then(function () {
-                        resolve(path);
-                    });
-                });
-            });
-        }),
-        new Promise(function (resolve, reject) {
-            tmp.file({postfix: 'tagged.pot'}, function (err, path, fd) {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                runPhpCommand(composerDir + '/extract-tagged-strings.php', [], {stdio: ['pipe', fd, 'pipe']}).then(function () {
-                    resolve(path);
-                });
-            });
-        }),
-        new Promise(function (resolve, reject) {
-            tmp.file({postfix: 'vocab.pot'}, function (err, path, fd) {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                runPhpCommand(scriptsDir + '/extract-vocab-strings.php', [], {stdio: ['pipe', fd, 'pipe']}).then(function () {
-                    resolve(path);
-                });
-            });
-        })
-    ])
-    .then(function (tempFiles) {
-        return runCommand('msgcat', tempFiles.concat(['-o', pot]));
+        i18nXgettext('.'),
+        i18nTaggedStrings('.'),
+        i18nVocabStrings()
+    ]).then(function (tempFiles) {
+        return runCommand('msgcat', tempFiles.concat(['--use-first', '-o', pot]));
+    });
+});
+
+gulp.task('i18n:compile', function () {
+    return glob('application/language/*.po').then(function (files) {
+        return Promise.all(files.map(compileToMo));
+    });
+})
+
+gulp.task('i18n:module:template', function () {
+    var modulePathPromise = getModulePath(cliOptions.module);
+    var preDedupePromise = modulePathPromise.then(function (modulePath) {
+        return Promise.all([
+            i18nXgettext(modulePath),
+            i18nTaggedStrings(modulePath)
+        ]);
+    }).then(function (tempFiles) {
+        return tmpFile({postfix: 'module-prededupe.pot'}).spread(function (path, fd) {
+            return runCommand('msgcat', tempFiles.concat(['-o', path]), {}, path);
+        });
+    });
+    var dupesPromise = preDedupePromise.then(function (preDedupePot) {
+        return tmpFile({postfix: 'module-dupes.pot'}).spread(function (path, fd) {
+            return runCommand('msgcomm', ['--omit-header', '-o', path, preDedupePot, pot], {}, path);
+        });
+    });
+    var languageDirPromise = modulePathPromise.then(function (modulePath) {
+        var languageDir = path.join(modulePath, 'language');
+        return fs.statAsync(languageDir).then(function (stats) {
+            if (!stats.isDirectory()) {
+                throw new Error('Language dir path exists, but is not a directory!');
+            }
+        }, function () {
+            return fs.mkdirAsync(languageDir);
+        }).then(function () {
+            return languageDir;
+        });
+    })
+
+    return Promise.join(languageDirPromise, preDedupePromise, dupesPromise, function (languageDir, preDedupePot, dupesPot) {
+        var modulePot = path.join(languageDir, 'template.pot');
+        return runCommand('msgcomm', ['--unique', '--to-code=utf-8', '-o', modulePot, preDedupePot, dupesPot]);
+    });
+});
+
+gulp.task('i18n:module:compile', function () {
+    return getModulePath(cliOptions.module).then(function (modulePath) {
+        return glob('language/*.po', {cwd: modulePath, absolute: true}).then(function (files) {
+            return Promise.all(files.map(compileToMo));
+        });
     });
 });
 
@@ -263,10 +314,10 @@ gulp.task('create-media-type-map', function () {
 
 gulp.task('init', gulp.series('dedist', 'deps'));
 
-gulp.task('clean', function (cb) {
-    rimraf.sync(buildDir);
-    rimraf.sync(__dirname + '/vendor');
-    cb();
+gulp.task('clean', function () {
+    return rimraf(buildDir).then(function () {
+        rimraf(__dirname + '/vendor');
+    });
 });
 
 gulp.task('zip', gulp.series('clean', 'init', function () {

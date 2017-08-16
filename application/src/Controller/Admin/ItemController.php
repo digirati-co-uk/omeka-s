@@ -100,8 +100,9 @@ class ItemController extends AbstractActionController
 
         $view = new ViewModel;
         $view->setVariable('items', $response->getContent());
-        $value = $this->params()->fromQuery('value');
-        $view->setVariable('searchValue', $value ? $value['in'][0] : '');
+        $view->setVariable('search', $this->params()->fromQuery('search'));
+        $view->setVariable('resourceClassId', $this->params()->fromQuery('resource_class_id'));
+        $view->setVariable('itemSetId', $this->params()->fromQuery('item_set_id'));
         $view->setVariable('showDetails', true);
         $view->setTerminal(true);
         return $view;
@@ -258,6 +259,7 @@ class ItemController extends AbstractActionController
         $view = new ViewModel;
         $view->setVariable('form', $form);
         $view->setVariable('item', $item);
+        $view->setVariable('resource', $item);
         $view->setVariable('mediaForms', $this->getMediaForms());
         return $view;
     }
@@ -419,7 +421,7 @@ class ItemController extends AbstractActionController
             }
         }
         if (isset($data['add_to_item_set'])) {
-            $dataAppend['o:item_set'] = $data['add_to_item_set'];
+            $dataAppend['o:item_set'] = array_unique($data['add_to_item_set']);
         }
 
         return [$dataRemove, $dataAppend];

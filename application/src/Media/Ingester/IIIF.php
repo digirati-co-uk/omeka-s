@@ -3,7 +3,7 @@ namespace Omeka\Media\Ingester;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\File\Manager as FileManager;
+use Omeka\File\Downloader;
 use Omeka\Stdlib\ErrorStore;
 use Zend\Form\Element\Url as UrlElement;
 use Zend\Http\Client as HttpClient;
@@ -18,14 +18,14 @@ class IIIF implements IngesterInterface
     protected $httpClient;
 
     /**
-     * @var FileManager
+     * @var Downloader
      */
-    protected $fileManager;
+    protected $downloader;
 
-    public function __construct(HttpClient $httpClient, FileManager $fileManager)
+    public function __construct(HttpClient $httpClient, Downloader $downloader)
     {
         $this->httpClient = $httpClient;
-        $this->fileManager = $fileManager;
+        $this->downloader = $downloader;
     }
 
     public function getLabel()
@@ -73,30 +73,28 @@ class IIIF implements IngesterInterface
         //Check if valid IIIF data
         if ($this->validate($IIIFData)) {
             $media->setData($IIIFData);
-        // Not IIIF
         } else {
             $errorStore->addError('o:source', 'URL does not link to IIIF JSON');
             return;
         }
 
-        //Check API version and generate a thumbnail
-        //Version 2.0
+        // Check API version and generate a thumbnail
         if (isset($IIIFData['@context']) && $IIIFData['@context'] == 'http://iiif.io/api/image/2/context.json') {
+            //Version 2.0
             $URLString = '/full/full/0/default.jpg';
-        // Earlier versions
         } else {
+            // Earlier versions
             $URLString = '/full/full/0/native.jpg';
         }
         if (isset($IIIFData['@id'])) {
-            $fileManager = $this->fileManager;
-            $file = $fileManager->getTempFile();
-            if ($fileManager->downloadFile($IIIFData['@id'] . $URLString, $file->getTempPath())) {
-                if ($fileManager->storeThumbnails($file)) {
-                    $media->setStorageId($file->getStorageId());
+            $tempFile = $this->downloader->download($IIIFData['@id'] . $URLString);
+            if ($tempFile) {
+                if ($tempFile->storeThumbnails()) {
+                    $media->setStorageId($tempFile->getStorageId());
                     $media->setHasThumbnails(true);
                 }
             }
-            $file->delete();
+            $tempFile->delete();
         }
     }
 
@@ -113,17 +111,17 @@ class IIIF implements IngesterInterface
     //This check comes from Open Seadragon's own validation check
     public function validate($IIIFData)
     {
-        // Version 2.0
         if (isset($IIIFData['protocol']) && $IIIFData['protocol'] == 'http://iiif.io/api/image') {
+            // Version 2.0
             return true;
-        // Version 1.1
         } elseif (isset($IIIFData['@context']) && (
+            // Version 1.1
             $IIIFData['@context'] == "http://library.stanford.edu/iiif/image-api/1.1/context.json" ||
             $IIIFData['@context'] == "http://iiif.io/api/image/1/context.json")) {
             // N.B. the iiif.io context is wrong, but where the representation lives so likely to be used
-                return true;
-        // Version 1.0
+            return true;
         } elseif (isset($IIIFData['profile']) &&
+            // Version 1.0
             $IIIFData['profile'][0]("http://library.stanford.edu/iiif/image-api/compliance.html") === 0) {
             return true;
         } elseif (isset($IIIFData['identifier']) && $IIIFData['width'] && $IIIFData['height']) {

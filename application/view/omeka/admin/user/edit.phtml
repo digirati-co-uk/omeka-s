@@ -1,4 +1,5 @@
 <?php
+$this->htmlElement('body')->appendAttribute('class', 'edit users');
 $form->prepare();
 $sectionNavs = [
     'user-information' => $this->translate('User information'),
@@ -8,7 +9,7 @@ $sectionNavs = [
 $formElement = $this->plugin('formElement');
 ?>
 
-<?php echo $this->pageTitle(sprintf($this->translate('Edit user: “%s”'), $user->email())); ?>
+<?php echo $this->pageTitle($user->email(), 1, $this->translate('Users'), $this->translate('Edit')); ?>
 <?php $this->trigger('view.edit.before'); ?>
 <?php echo $this->form()->openTag($form); ?>
 <div id="page-actions">
@@ -28,9 +29,9 @@ $formElement = $this->plugin('formElement');
     <table class="tablesaw tablesaw-stack" data-tablesaw-mode="stack">
         <thead>
             <tr>
-                <th><?php echo $this->translate('Label'); ?></th>
-                <th><?php echo $this->translate('ID'); ?></th>
-                <th><?php echo $this->translate('Delete'); ?>?</th>
+                <th class="api-label"><?php echo $this->translate('Label'); ?></th>
+                <th class="api-id"><?php echo $this->translate('ID'); ?></th>
+                <th class="api-delete"><?php echo $this->translate('Delete'); ?>?</th>
             </tr>
         </thead>
         <?php foreach ($keys as $id => $label): ?>

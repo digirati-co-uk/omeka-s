@@ -91,6 +91,7 @@ body {
     table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
     }
 
     th,
@@ -122,7 +123,7 @@ body {
     }
 
     table.tablesaw td:first-child a {
-        word-break: break-word;
+        word-wrap: break-word;
     }
 
     table.tablesaw thead tr:first-child th {
@@ -275,6 +276,11 @@ body {
         }
     }
 
+    label input[type="checkbox"] {
+        display: inline-block;
+        width: auto;
+    }
+
     label.required:after  {
         font-family: "FontAwesome";
         content: $fa-var-asterisk;
@@ -291,8 +297,6 @@ body {
     .field {
         @include field-row;
         display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
 
         &:first-child {
             border-color: transparent;
@@ -356,6 +360,7 @@ body {
         margin: 0 0 $spacing-large;
         border: 0;
         padding: 0;
+        min-width: 100%;
     }
 
     .selector input[type="text"],
@@ -365,10 +370,6 @@ body {
 
     .selector > ul {
         margin: 0;
-    }
-
-    .selector.sidebar .selector-parent {
-        margin-bottom: 0;
     }
 
         /* @group ----- Forms elements: Chosen selects ----- */
@@ -384,6 +385,7 @@ body {
             border-radius: 3px;
             border-collapse: $border-gray;
             color: $copy-gray;
+            border-color: $border-gray;
         }
 
         .chosen-container-active.chosen-with-drop .chosen-single {
@@ -432,6 +434,19 @@ body {
         .chosen-container .chosen-results li.highlighted {
             background-color: $copy-gray;
             background-image: none;
+        }
+
+        .chosen-container.chosen-drop-up .chosen-drop {
+            top: auto;
+            bottom: 100%;
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.15);
+            border-top: 1px solid #aaa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chosen-container-active.chosen-drop-up.chosen-with-drop .chosen-single {
+            border-radius: 0 0 4px 4px;
         }
 
         /* @end */
@@ -686,7 +701,7 @@ div[role="main"] > h1:first-of-type {
     background-color: #fff;
     font-size: 1.5 * $base-font-size;
     position: fixed;
-    padding: 0 30% 0 gutter();
+    padding: (.5 * $spacing-small) 30% (.5 * $spacing-small) gutter();
     z-index: 3;
     top: 0;
     right: 0;
@@ -694,8 +709,46 @@ div[role="main"] > h1:first-of-type {
     height: 2 * $spacing-large;
     border-bottom: 1px solid $border-gray;
     overflow: hidden;
+    line-height: 1.5 * $base-line-height;
+}
+
+div[role="main"] > h1:first-of-type .title {
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 65%;
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: middle;
+}
+
+.subhead {
+    text-transform: uppercase;
+    font-size: .875 * $base-font-size;
+    padding: 0 $spacing-small;
+    background-color: #eee;
+    line-height: 1.5 * $base-line-height;
+    vertical-align: middle;
+    margin: 0 $spacing-medium 0 0;
+    font-weight: normal;
+    display: inline-block;
+}
+
+.subhead:before {
+    font-family: "FontAwesome";
+    display: inline-block;
+    margin-right: $spacing-small;
+    font-size: $base-font-size;
+    vertical-align: top;
+}
+
+.action {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.action:before {
+    content:"\00b7";
+    margin: 0 $spacing-medium;
 }
 
 /* @end */
@@ -864,43 +917,53 @@ nav.pagination + *:not(.sorting) {
         width: $spacing-large;
     }
 
-    header nav .items:before {
+    header nav .items:before,
+    .items .subhead:before {
         content: $fa-var-cube;
     }
 
-    header nav .media:before {
+    header nav .media:before,
+    .media .subhead:before {
         content: $fa-var-image;
     }
 
-    header nav .item-sets:before {
+    header nav .item-sets:before,
+    .item-sets .subhead:before {
         content: $fa-var-cubes;
     }
 
-    header nav .vocabularies:before {
+    header nav .vocabularies:before,
+    .vocabularies .subhead:before {
         content: $fa-var-book;
     }
 
-    header nav .resource-templates:before {
+    header nav .resource-templates:before,
+    .resource-templates .subhead:before {
         content: $fa-var-pencil-square;
     }
 
-    header nav .users:before {
+    header nav .users:before,
+    .users .subhead:before {
         content: $fa-var-user;
     }
 
-    header nav .modules:before {
+    header nav .modules:before,
+    .modules .subhead:before {
         content: $fa-var-plus-square;
     }
 
-    header nav .jobs:before {
+    header nav .jobs:before,
+    .jobs .subhead:before {
         content: $fa-var-tasks;
     }
 
-    header nav .sites:before {
+    header nav .sites:before,
+    .sites .subhead:before {
         content: $fa-var-laptop;
     }
 
-    header nav .settings:before {
+    header nav .settings:before,
+    .settings .subhead:before {
         content: $fa-var-gears;
     }
 
@@ -958,12 +1021,13 @@ nav.pagination + *:not(.sorting) {
         font-size: $base-font-size;
     }
 
-    #menu .pages:before {
+    #menu .pages:before,
+    .site-pages .subhead:before {
         content: $fa-var-file-o;
     }
 
     #menu a.navigation:before {
-        content: $fa-var-navicon;
+        content: $fa-var-sitemap;
     }
 
     #menu a.public {
@@ -974,15 +1038,16 @@ nav.pagination + *:not(.sorting) {
         margin-top: -(1.625 * $spacing-large);
     }
 
-    #menu a.item-pool:before {
-        content: $fa-var-cube;
+    #menu a.resources:before {
+        content: $fa-var-cubes;
     }
 
     #menu a.site-info:before {
         content: $fa-var-gears;
     }
 
-    #menu a.theme:before {
+    #menu a.theme:before,
+    .theme-settings .subhead:before {
         content: $fa-var-paint-brush;
     }
 
@@ -1077,7 +1142,7 @@ div[role="main"] {
 .browse table img {
     width: (1.5 * $spacing-large);
     display: inline-block;
-    margin: 0 $spacing-small 0 0;
+    margin: 0 $spacing-medium 0 0;
     vertical-align: middle;
 }
 
@@ -1098,25 +1163,42 @@ div[role="main"] {
     padding: 0 10px;
 }
 
-.browse .tablesaw-cell-content {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-.browse .batch-edit input[type="checkbox"] {
+.browse .select-all {
+    width: $spacing-medium;
     margin-right: $spacing-medium;
 }
 
-span.indent {
+.browse .tablesaw-cell-content,
+#properties .tablesaw-cell-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    word-wrap: break-word;
+
+    .resource-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    & > .actions {
+        white-space: nowrap;
+    }
+}
+
+.browse .batch-edit .tablesaw-cell-content > input[type="checkbox"] {
+    margin-right: $spacing-medium;
+}
+
+.browse .tablesaw-cell-content > span.indent {
     display: inline-block;
     vertical-align: top;
+    flex: 0;
+    min-width: 1em;
 }
 
 .actions {
     margin: 0 0 0 auto;
     display: flex;
-    order: 5;
 }
 
 .actions li {
@@ -1222,7 +1304,8 @@ td .o-icon-private {
     content: $fa-var-book;
 }
 
-.resource-templates .no-resources:before {
+.resource-templates .no-resources:before,
+.resources-templates {
     content: $fa-var-pencil-square;
 }
 
@@ -1550,7 +1633,7 @@ input[type="text"].value-language,
     }
 
     .field-meta {
-        width: span(3 of 10);
+        min-width: span(3 of 10);
         padding-right: $spacing-small;
         position: relative;
 
@@ -1632,18 +1715,21 @@ input[type="text"].value-language,
     }
 
     .selector .selectable-list li {
-        padding: $spacing-small 10px;
+        padding: $spacing-small $spacing-medium;
     }
 
-    .selector-parent {
+    .selector .selectable-list .selector-parent {
         cursor: pointer;
+        padding-right: $spacing-large;
+        margin-bottom: 0;
 
         &:after {
             content: $fa-var-caret-right;
             font-family: "FontAwesome";
             position: absolute;
-            right: (1.5 * $spacing-medium);
+            right: 0;
             top: $spacing-small;
+            width: 1.5 * $spacing-medium;
         }
 
         &.show:after {
@@ -1677,9 +1763,10 @@ input[type="text"].value-language,
         border-radius: 0;
         font-weight: normal;
         padding: $spacing-small 10px;
-        margin: 0 -10px;
+        margin: 0 (-$spacing-medium);
         font-size: $base-font-size;
         text-transform: none;
+        width: calc(100% + #{1.5 * $spacing-large});
 
         &:hover {
             background-color: $gray-on-white;
@@ -1693,6 +1780,10 @@ input[type="text"].value-language,
     .selector .description {
         display: inline-block;
         vertical-align: top;
+
+        &.no-comment {
+            opacity: 0;
+        }
 
         .o-icon-info {
             display: inline-block;
@@ -1740,16 +1831,13 @@ input[type="text"].value-language,
             top: -9999px;
             left: -9999px;
             width: calc(100% - 5px);
-
-            &:empty {
-                padding: 0;
-            }
         }
     }
 
     .selector .selectable {
         display: inline-block;
         width: calc(100% - #{(1.5 * $spacing-large)});
+        word-wrap: break-word;
     }
 
     .field-actions {
@@ -1867,10 +1955,8 @@ input[type="text"].value-language,
     }
 
     .inputs {
-        flex: 1;
-        vertical-align: top;
-        position: relative;
         line-height: 1.5 * $spacing-large;
+        min-width: 70%;
 
         &:only-child {
             width: 100%;
@@ -1902,6 +1988,7 @@ input[type="text"].value-language,
             resize: vertical;
             line-height: 1.5;
             background-color: #fff;
+            min-width: 0;
         }
 
         label {
@@ -2037,10 +2124,12 @@ input[type="text"].value-language,
 
     [data-data-type="resource"] .default,
     [data-data-type="resource"] .o-title:not(:empty) {
-        @include bleed-x($spacing-small);
-        border-color: $border-gray;
+        margin: 0 (-$spacing-small);
+        padding: $spacing-small;
         border-bottom: 1px solid $border-gray;
-        display: block;
+        display: flex;
+        line-height: $base-line-height;
+        word-wrap: break-word;
     }
 
     [data-data-type="resource"].delete .o-icon-undo:before {
@@ -2067,7 +2156,7 @@ input[type="text"].value-language,
 
     .value.delete span.restore-value {
         display: inline-block;
-        padding: 0;
+        padding: 0 $spacing-small;
     }
 
     .value.delete > *:not(.input-header) {
@@ -2078,15 +2167,13 @@ input[type="text"].value-language,
         margin: 0;
     }
 
-    .selected-resource img {
-        height: $base-line-height;
-        display: inline-block;
-        vertical-align: middle;
-        margin-right: $spacing-small;
+    .selected-resource a {
+        width: calc(100% - #{3 * $spacing-large});
     }
 
-    .selected-resource a {
-        vertical-align: middle;
+    .selected-resource img {
+        height: $base-line-height;
+        margin-right: $spacing-small;
     }
 
     .selected-resource .o-title a:after {
@@ -2100,6 +2187,10 @@ input[type="text"].value-language,
 
     .selected-resource .item_sets a:after {
         content: $fa-var-cubes;
+    }
+
+    .selected-resource .media a:after {
+        content: $fa-var-image;
     }
 
     [data-data-type="uri"] .input {
@@ -2148,33 +2239,22 @@ input[type="text"].value-language,
         margin-bottom: $spacing-small;
         display: flex;
         align-items: center;
+        word-wrap: break-word;
     }
 
     .media.row img {
         width: 1.5 * $spacing-large;
         height: auto;
-        order: 2;
         margin-right: $spacing-medium;
     }
 
     .media.row .resource-name {
         margin-right: $spacing-medium;
-    }
-
-    .media.row .sortable-handle {
-        order: 1;
+        min-width: 0;
     }
 
     .media.row .actions {
-        order: 4;
         margin-left: auto;
-    }
-
-    .media.row .resource-name {
-        word-break: break-all;
-        order: 3;
-        margin-right: $spacing-medium;
-        left: auto;
     }
 
     .media.value.delete span.restore-value {
@@ -2274,12 +2354,13 @@ input[type="text"].value-language,
     .resource-search {
         width: 100%;
         position: relative;
-        overflow: hidden;
-        margin-bottom: $spacing-large;
+        margin-bottom: $spacing-small;
+        display: flex;
+        flex-wrap: wrap;
     }
 
-    #resource-list-search {
-        float: left;
+    .chosen-container {
+        margin-bottom: $spacing-small;
     }
 
     button.o-icon-search {
@@ -2289,10 +2370,9 @@ input[type="text"].value-language,
         padding: 0 10px;
         border-radius: 0 3px 3px 0;
         min-height: 0;
-        position: absolute;
-        top: 0;
-        right: 0;
+        position: relative;
         text-indent: -9999px;
+        margin: 0;
 
         &:before {
             text-indent: 0px;
@@ -2307,6 +2387,24 @@ input[type="text"].value-language,
     .resource-search > input[type="text"] {
         width: calc(100% - #{(1.5 * $spacing-large)});
         border-right: 0;
+        margin-bottom: $spacing-small;
+    }
+}
+
+.resource-search-filters {
+    padding-bottom: $spacing-small - 1px;
+    border-bottom: 1px solid $border-gray;
+    margin-bottom: $spacing-small;
+    width: 100%;
+
+    a.expand:after,
+    a.collapse:after {
+        float: right;
+    }
+
+    .collapsible {
+        margin-top: $spacing-small;
+        overflow: visible;
     }
 }
 
@@ -2317,6 +2415,7 @@ input[type="text"].value-language,
         padding-bottom: ($spacing-medium - 1px);
         margin-bottom: 0;
         overflow: hidden;
+        width: 100%;
 
         li {
             float: left;
@@ -2357,15 +2456,9 @@ input[type="text"].value-language,
     }
 }
 
-#item-results {
-    padding: $spacing-medium;
-    margin: -$spacing-medium;
-    border-bottom: 1px solid $border-gray;
-
-    & + .confirm-panel,
-    .select-resource-checkbox-wrapper {
-        display: none;
-    }
+#item-results + .confirm-panel,
+#item-results .select-resource-checkbox-wrapper {
+    display: none;
 }
 
 #item-results.active {
@@ -2412,6 +2505,7 @@ input[type="text"].value-language,
     .select-resource {
         display: flex;
         align-items: center;
+        min-width: 0;
     }
 
     img {
@@ -2422,11 +2516,8 @@ input[type="text"].value-language,
 
     .resource-name {
         margin: 0;
-        width: calc(100% - #{$spacing-large});
-
-        &:only-child {
-            margin: 0 0 0 $spacing-small;
-        }
+        flex: 1;
+        min-width: 0;
     }
 
     .resource {
@@ -2437,6 +2528,7 @@ input[type="text"].value-language,
         overflow: hidden;
         display: flex;
         align-items: center;
+        word-wrap: break-word;
 
         &:hover {
             background-color: rgba(255,255,255,.8);
@@ -2465,26 +2557,25 @@ input[type="text"].value-language,
     }
 }
 
-#resource-details-main {
+.confirm-main {
     position: absolute;
     top: 0;
     bottom: (2.5 * $spacing-large);
     overflow-y: auto;
-    width: 100%;
+    left: 0;
+    right: 0;
     padding: $spacing-medium $spacing-medium 0;
 }
 
 
-#select-item,
 .confirm-panel {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     right: 0;
-    width: span(4 of 16);
+    left: 0;
     padding: $spacing-medium;
     background-color: #f7f7f7;
     border-top: 1px solid $border-gray;
-    border-left: 1px solid $border-gray;
 
     button,
     .button {
@@ -2526,7 +2617,7 @@ input[type="text"].value-language,
 .vocabs.update td:first-of-type,
 .vocabs.update td:nth-of-type(2) {
     width: 15%;
-    word-break: break-word;
+    word-wrap: break-word;
 }
 
 .vocabs.update td:nth-of-type(3),
@@ -2551,31 +2642,39 @@ input[type="text"].value-language,
 /* @group ----- Show Views ----- */
 
 .show .property,
-.show .meta-group {
+#item-metadata .meta-group {
     overflow: hidden;
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 
     h4 {
         width: span(2 of 9);
         vertical-align: top;
         padding: $spacing-small 0;
-        float: left;
     }
 
-    .value {
+    h4 + .value,
+    .values {
         padding: $spacing-small;
         margin-bottom: 0;
         word-wrap: break-word;
         width: span(7 of 9);
-        float: right;
 
         &:not(:first-of-type) {
             padding-top: 0;
         }
     }
 
+    .resource {
+        display: flex;
+        align-items: center;
+    }
+
     .language {
         font-size: .75 * $base-font-size;
-        padding: rhythm(.25, .75 * $base-font-size);
+        padding: 0 $spacing-small;
+        margin-right: $spacing-small;
         background-color: $gray-on-white;
     }
 }
@@ -2583,6 +2682,10 @@ input[type="text"].value-language,
 /* @end */
 
     /* @group ----- Item: Show----- */
+
+    .property .value a {
+        width: calc(100% - #{1.5 * $spacing-large});
+    }
 
     .property .value a:after {
         font-family: "FontAwesome";
@@ -2596,6 +2699,10 @@ input[type="text"].value-language,
 
     .property .value.items a:after {
         content: $fa-var-cube;
+    }
+
+    .property .value.media a:after {
+        content: $fa-var-image;
     }
 
     .property .value img {
@@ -2638,11 +2745,11 @@ input[type="text"].value-language,
     bottom: 0;
     background-color: #f7f7f7;
     z-index: 3;
-    padding: $spacing-medium;
     border-left: 1px solid $border-gray;
     overflow-y: auto;
     overflow-x: hidden;
     width: span(4 of 16);
+    padding: $spacing-medium;
 
     body.transitions-enabled & {
         transition: left .5s, visibility .5s;
@@ -2716,8 +2823,15 @@ input[type="text"].value-language,
         vertical-align: middle;
     }
 
+    input,
+    textarea,
     select {
         width: 100%;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: auto;
     }
 
     h2 {
@@ -2753,6 +2867,17 @@ input[type="text"].value-language,
         padding: 0;
         margin-bottom: $spacing-large;
         flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .field .option {
+        width: 100%;
+    }
+
+    .field div.option + div.option {
+        padding-top: ($spacing-medium - 1px);
+        border-top: 1px solid $border-gray;
+        margin-top: $spacing-medium;
     }
 
     .button,
@@ -2845,66 +2970,37 @@ body.sidebar-open #content {
 
 /* @group ----- Resource Template: Edit ----- */
 
-.resource-template #properties {
+.resource-templates #properties {
     list-style: none;
     padding-left: 0;
     margin-left: 0;
 }
 
-.resource-template table {
+.resource-templates table {
     width: 100%;
     background-color: rgba(0,0,0,.08);
 }
 
-.resource-template th,
-.resource-template td {
+.resource-templates th,
+.resource-templates td {
     padding: $spacing-small;
     vertical-align: top;
 }
 
-.resource-template textarea {
+.resource-templates textarea {
     height: 1.5 * $spacing-large;
     width: 100%;
 }
 
-.resource-template th:first-of-type,
-.resource-template td:first-of-type, {
-    width: span(2 of 10);
-    padding-right: $spacing-large;
-}
-
-.resource-template th:nth-of-type(2) {
-    width: span(2 of 10);
-}
-
-.resource-template th:nth-of-type(3) {
-    width: span(4 of 10);
-}
-
-.resource-template .local-name {
-    font-style: italic;
-}
-
 .resource-template .property.row {
-    padding: (1.75 * $spacing-large) $spacing-small $spacing-small (2 * $spacing-large);
+    padding: $spacing-small $spacing-small $spacing-small (2 * $spacing-large);
 
     &.delete {
         background-color: $delete-bg;
     }
-
-    label:first-child,
-    input[type="text"],
-    textarea,
-    select {
-        display: inline-block;
-        vertical-align: top;
-        resize: vertical;
-    }
 }
 
 .resource-template .property.row .sortable-handle {
-    background-color: $gray-on-white;
-    width: 100%;
     top: 0;
     left: 0;
     height: (1.5 * $spacing-large);
@@ -2917,12 +3013,6 @@ body.sidebar-open #content {
     }
 }
 
-.resource-template .property.row label,
-.resource-template .property.row input[type="text"] {
-    width: 100%;
-    line-height: 1.5 * $spacing-large;
-}
-
 .resource-template .property.row .actions {
     position: absolute;
     right: $spacing-small;
@@ -2930,54 +3020,39 @@ body.sidebar-open #content {
     padding: 0 $spacing-small;
 }
 
-.resource-template #properties {
+.resource-templates #properties {
     margin: $spacing-large 0 0;
     clear: both;
     padding: 0;
+}
 
-    & > li:first-child {
-        @include field-row;
-        padding-left: (1.8333 * $spacing-large);
+.resource-template #edit-sidebar {
+    padding-bottom: 2 * $spacing-large;
+}
+
+.resource-template #edit-sidebar .field h4,
+.resource-template #edit-sidebar .field h4 + span {
+    width: 100%;
+}
+
+.resource-template #edit-sidebar .field h4 + span {
+    margin-bottom: $spacing-medium;
+}
+
+.resource-template #edit-sidebar .field label:not(:first-child),
+.resource-template #edit-sidebar .field .option label {
+    margin: 0;
+    padding-bottom: $spacing-small;
+
+    &:only-child {
+        padding-bottom: 0;
     }
-}
 
-.resource-template .property-heading {
-    font-weight: bold;
-    display: inline-block;
-    width: span(3 of 9);
-}
-
-.resource-template .property-heading:not(:first-child) {
-    margin-left: -4px;
-}
-
-.resource-template .property.row .property-label,
-.resource-template .property.row textarea,
-.resource-template .property.row select {
-    display: inline-block;
-    width: calc(#{span(3 of 9)} - #{$spacing-small});
-    margin-left: -4px;
-    margin-right: $spacing-small;
-}
-
-.resource-template .property.row .property-label {
-    margin-top: -(1.75 * $spacing-large);
-}
-
-.resource-template .property.row label {
-    margin-bottom: $spacing-small;
-}
-
-.resource-template .property.row select {
-    width: span(3 of 9);
-    margin-right: 0;
-}
-
-.resource-template .property.row label.require-property {
-    margin: -(1.5 * $spacing-large) 0 0 -4px;
-    display: block;
-    width: auto;
-    float: left;
+    &:after {
+        padding: 0;
+        margin: 0;
+        background: transparent;
+    }
 }
 
 /* @end */
@@ -3056,6 +3131,22 @@ body.sidebar-open #content {
     &:hover {
         box-shadow: 0 0 0 1px #DA8B8B inset;
     }
+}
+
+/* @end */
+
+/* @group ----- Users ----- */
+
+#edit-keys td {
+    word-wrap: break-word;
+}
+
+.api-delete {
+    width: 10%;
+}
+
+.api-label {
+    width: 25%;
 }
 
 /* @end */
@@ -3253,7 +3344,6 @@ body.sidebar-open #content {
     }
 
     .block .attachment .actions {
-        order: 4;
         margin-left: auto;
     }
 
@@ -3359,17 +3449,6 @@ body.sidebar-open #content {
         padding-bottom: 0;
     }
 
-    #attachment-options-main {
-        position: absolute;
-        top: 0;
-        bottom: (2.5 * $spacing-large);
-        left: 0;
-        right: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 0 $spacing-medium;
-    }
-
     #attachment-options .option {
         position: relative;
         margin-bottom: $spacing-medium;
@@ -3394,6 +3473,7 @@ body.sidebar-open #content {
 
     #attachment-options .selected-attachment {
         margin-bottom: $spacing-medium;
+        margin-top: -$spacing-medium;
         @include bleed-x($spacing-medium);
         padding-top: $spacing-medium;
         padding-bottom: $spacing-medium;
@@ -3743,10 +3823,15 @@ body.minimal {
 .asset-list .select-asset {
     display: flex;
     align-items: center;
+    word-wrap: break-word;
 }
 
 .asset-list .select-asset img {
     margin-right: $spacing-small;
+}
+
+.asset-list .select-asset .asset-name {
+    min-width: 0;
 }
 
 #asset-sidebar input[type="file"] {

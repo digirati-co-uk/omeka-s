@@ -1,22 +1,25 @@
 # Omeka S
 
 Omeka S is a web publication system for universities, galleries, libraries,
-archives, and museums. It consists of a local network of independently curated exhibits sharing
-a collaboratively built pool of items, media, and their metadata.
+archives, and museums. It consists of a local network of independently curated
+exhibits sharing a collaboratively built pool of items, media, and their metadata.
 
 ## Installation
 
 ### Requirements
 * Linux
-* Apache
-* MySql 5.5.3+ and the MySQL driver for PDO
-* PHP 5.6+ (the latest stable version preferred) and the PHP extensions for PDO
+* Apache (with [AllowOverride](https://httpd.apache.org/docs/2.4/mod/core.html#allowoverride) set to "All" and [mod_rewrite](http://httpd.apache.org/docs/current/mod/mod_rewrite.html) enabled)
+* MySql 5.5.3+
+* PHP 5.6+ (latest stable version preferred, with [PDO](http://php.net/manual/en/intro.pdo.php), [pdo_mysql](http://php.net/manual/en/ref.pdo-mysql.php), and [xml](http://php.net/manual/en/intro.xml.php) extensions installed)
 
 ### Gotchas
-* The default library for generating thumbnails is ImageMagick, at least version 6.7.5. Older versions will not correctly produce thumbnails. See local.config.php options below. 
+* The default library for generating thumbnails is ImageMagick, at least version
+6.7.5. Older versions will not correctly produce thumbnails. See local.config.php
+options below. 
 
 ### Installing from GitHub
 
+1. Make sure [Node.js](https://nodejs.org/) and [npm](https://nodejs.org/) are installed
 1. Clone this repository in your Apache web directory:
    * `$ git clone https://github.com/omeka/omeka-s.git`
 1. Change into the Omeka S directory:
@@ -55,16 +58,22 @@ You can find Omeka-specific code under `application/`.
 
 ### Updating from released zip file
 1. Download the latest release from the [release page](https://github.com/omeka/omeka-s/releases)
-2. Make a copy of your `/config/local.config.php` file.
+2. Make a copy of your `/config` directory. You will need to restore your `local.config.php` and `database.ini` files from that copy.
 3. Make a copy of your `/modules` and `/themes` directories.
 4. Make a copy of your `/files` directory.
 5. Remove all Omeka S files, and replace them with the files from the updated zip file.
 6. Replace your original `/config/local.config.php` file, and the `/modules`, `/themes`, and `/files` directories that you copied.
 7. In your web browser, go to your site and run any migrations that are needed.
 
+## Creating a zipped release
+
+`gulp zip` will create a zipped version of Omeka S and store it in `/build`. Use the `--no-dev` flag to omit Composer
+dev dependencies for a smaller package suitable for end-users. Official releases follow this same process from a
+new, clean checkout.
+
 ## local.config.php options
 
-* `thumbnailer` Default is `Omeka\File\ImageMagickThumbnailer`. Also available are `Omeka\File\IMagickThumbnailer` and `Omeka\File\GdThumbnailer`
+* `thumbnailer` Default is `Omeka\File\Thumbnailer\ImageMagick`. Also available are `Omeka\File\Thumbnailer\Imagick` and `Omeka\File\Thumbnailer\Gd`
 * `phpcli_path` Default is to attempt to detect correct path to PHP. Use this option to specify a path if needed in your server configuration. For example: 
 ```
     'cli' => array(

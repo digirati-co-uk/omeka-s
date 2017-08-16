@@ -19,7 +19,7 @@
             // Restore the original property label and comment.
             $('.alternate').remove();
             $('.field-label, .field-description').show();
-            rewritePropertyFields(true);
+            applyResourceTemplate(true);
         });
 
         $('a.value-language:not(.active)').on('click', function(e) {
@@ -32,15 +32,10 @@
         });
 
         $('input.value-language').on('keyup', function(e) {
-            var languageTag = this.value;
-            // @see http://stackoverflow.com/questions/7035825/regular-expression-for-a-language-tag-as-defined-by-bcp47
-            // Removes `|[A-Za-z]{4}|[A-Za-z]{5,8}` from the "language" portion
-            // becuase, while in the spec, it does not represent current usage.
-            if ('' == languageTag
-                || languageTag.match(/^(((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang))|((([A-Za-z]{2,3}(-([A-Za-z]{3}(-[A-Za-z]{3}){0,2}))?))(-([A-Za-z]{4}))?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-([0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*(-(x(-[A-Za-z0-9]{1,8})+))?)|(x(-[A-Za-z0-9]{1,8})+))$/)) {
+            if ('' === this.value || Omeka.langIsValid(this.value)) {
                 this.setCustomValidity('');
             } else {
-                this.setCustomValidity(Omeka.jsTranslate('Please enter a valid language tag'));
+                this.setCustomValidity(Omeka.jsTranslate('Please enter a valid language tag'))
             }
         });
 
@@ -119,7 +114,6 @@
                         value = makeNewValue(field.data('property-term'), null, 'resource');
                         field.find('.values').append(value);
                     }
-                    console.log(value[0]);
                     var valueObj = $(this).data('resource-values');
                     var namePrefix = value.data('name-prefix');
                     $(document).trigger('o:prepare-value', ['resource', value, valueObj, namePrefix]);
@@ -243,16 +237,14 @@
                 .val(valueObj ? valueObj[valueKey] : null);
         });
 
-        if (type === 'resource') {
-            prepareResource(value, valueObj, namePrefix);
-        }
-    });
-
-    /**
-     * Prepare the markup for the resource data type.
-     */
-    var prepareResource = function(value, valueObj, namePrefix) {
-        if (valueObj) {
+        // Prepare the markup for the resource data types.
+        var resourceDataTypes = [
+            'resource',
+            'resource:item',
+            'resource:itemset',
+            'resource:media',
+        ];
+        if (valueObj && -1 !== resourceDataTypes.indexOf(type)) {
             value.find('span.default').hide();
             var resource = value.find('.selected-resource');
             if (typeof valueObj['display_title'] === 'undefined') {
@@ -267,7 +259,7 @@
                     .prepend($('<img>', {src: valueObj['thumbnail_url']}));
             }
         }
-    }
+    });
 
     /**
      * Make a new property field.
@@ -371,10 +363,11 @@
     };
 
     /**
-     * Rewrite all property fields following the rules defined by the selected
-     * resource template.
+     * Apply the selected resource template to the form.
+     *
+     * @param bool changeClass Whether to change the suggested class
      */
-    var rewritePropertyFields = function(changeClass) {
+    var applyResourceTemplate = function(changeClass) {
 
         // Fieldsets may have been marked as required in a previous state.
         $('.field').removeClass('required');
@@ -450,7 +443,7 @@
             });
         }
 
-        $.when(rewritePropertyFields(false)).done(function () {
+        $.when(applyResourceTemplate(false)).done(function () {
             $('#properties').closest('form').trigger('o:form-loaded');
         });
 

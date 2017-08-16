@@ -125,7 +125,14 @@ class ResourceTemplateController extends AbstractActionController
     protected function flagValid(array $import)
     {
         $vocabs = [];
-        $dataTypes = ['literal', 'uri', 'resource'];
+        $dataTypes = [
+            'literal',
+            'uri',
+            'resource',
+            'resource:item',
+            'resource:itemset',
+            'resource:media',
+        ];
 
         $getVocab = function ($namespaceUri) use (&$vocabs) {
             if (isset($vocabs[$namespaceUri])) {
@@ -425,8 +432,8 @@ class ResourceTemplateController extends AbstractActionController
     {
         $action = $this->params('action');
 
-        // Set POSTed property rows
         if ($this->getRequest()->isPost()) {
+            // Set POSTed property rows
             $data = $this->params()->fromPost();
             $propertyRows = $data['o:resource_template_property'];
             foreach ($propertyRows as $key => $propertyRow) {
@@ -440,9 +447,8 @@ class ResourceTemplateController extends AbstractActionController
                 )->getContent();
                 $propertyRows[$property->id()]['o:property'] = $property;
             }
-
-        // Set default property rows.
         } else {
+            // Set default property rows
             $propertyRows = [];
             if ('edit' == $action) {
                 $resourceTemplate = $this->api()

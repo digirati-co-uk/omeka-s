@@ -248,6 +248,13 @@ class MvcListeners extends AbstractListenerAggregate
                 $services->get('ViewHelperManager')->setFactory($helper, $factory);
             }
         }
+
+        // Set the configured site locale to the translator.
+        $siteSettings = $services->get('Omeka\Settings\Site');
+        $locale = $siteSettings->get('locale');
+        if ($locale) {
+            $services->get('MvcTranslator')->getDelegatedTranslator()->setLocale($locale);
+        }
     }
 
     public function checkExcessivePost(MvcEvent $event)
@@ -288,7 +295,7 @@ class MvcListeners extends AbstractListenerAggregate
         }
 
         // Inject the site into things that need it.
-        $services->get('Omeka\SiteSettings')->setSite($site);
+        $services->get('Omeka\Settings\Site')->setTargetId($site->id());
         $services->get('ControllerPluginManager')->get('currentSite')->setSite($site);
 
         // Set the site to the top level view model

@@ -1,8 +1,12 @@
 (function($) {
+
     function searchResources() {
-        var searchInput = $('#resource-list-search');
-        var searchValue = searchInput.val();
-        Omeka.populateSidebarContent(searchInput.closest('.sidebar'), $('#sidebar-resource-search .o-icon-search').data('search-url'), {'search': searchValue});
+        var sidebarResourceSearch = $('#sidebar-resource-search');
+        Omeka.populateSidebarContent(
+            sidebarResourceSearch.closest('.sidebar'),
+            sidebarResourceSearch.data('search-url'),
+            sidebarResourceSearch.find(':input').serialize()
+        );
     }
 
     $(document).ready( function() {
@@ -27,7 +31,8 @@
         });
 
         $('#select-item a').on('click', function (e) {
-            e.preventDefault()
+            e.preventDefault();
+            Omeka.closeSidebar($('#select-resource'));
             Omeka.closeSidebar($('#resource-details'));
             $(this).trigger('o:resource-selected');
         });
@@ -42,20 +47,30 @@
                     selectCheckbox.prop('checked', true);
                 }
             } else {
-                Omeka.closeSidebar($(e.delegateTarget));
                 $(this).trigger('o:resource-selected');
             }
         });
 
         $('#select-resource').on('click', '.quick-select-toggle', function() {
             $(this).toggleClass('active');
-            $('#item-results').toggleClass('active');
+            $('#item-results').toggleClass('active').toggleClass('confirm-main');
         });
 
         $('#select-resource').on('click', '.select-resources-button', function(e) {
             Omeka.closeSidebar($(e.delegateTarget));
             $(this).trigger('o:resources-selected');
         });
+
+        $('#select-resource').on('o:sidebar-content-loaded', function(e) {
+            // Make a shallow copy of the Chosen options so we can modify it
+            // without affecting subsequent Chosen instances.
+            var newOptions = $.extend({}, chosenOptions);
+            // Group labels are too long for sidebar selects.
+            newOptions.include_group_label_in_selected = false;
+            $('#filter-resource-class').chosen(newOptions);
+            $('#filter-item-set').chosen(newOptions);
+        });
+
     });
 })(jQuery);
 
