@@ -75,9 +75,6 @@
     "autoload": {
         "psr-4": {"Omeka\\": "application/src"}
     },
-    "config": {
-        "platform": {"php": "5.6"}
-    },
     "repositories": [
         {
             "type": "vcs",
