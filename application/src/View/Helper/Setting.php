@@ -5,7 +5,7 @@ use Omeka\Settings\SettingsInterface;
 use Zend\View\Helper\AbstractHelper;
 
 /**
- * Helper to get settings from the settings service.
+ * View helper for getting settings.
  */
 class Setting extends AbstractHelper
 {
@@ -30,10 +30,12 @@ class Setting extends AbstractHelper
      * Will return null if no setting exists with the passed ID.
      *
      * @param string $id
+     * @param mixed $default
+     * @param int $targetId
      * @return mixed
      */
-    public function __invoke($id, $default = null)
+    public function __invoke($id, $default = null, $targetId = null)
     {
-        return $this->settings->get($id, $default);
+        return $this->settings->get($id, $default, $targetId);
     }
 }

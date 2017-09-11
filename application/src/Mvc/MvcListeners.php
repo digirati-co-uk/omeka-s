@@ -1,13 +1,18 @@
 <?php
 namespace Omeka\Mvc;
 
+use Composer\Semver\Comparator;
+use Omeka\Session\SaveHandler\Db;
 use Omeka\Site\Theme\Manager;
 use Omeka\Site\Theme\Theme;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\AbstractListenerAggregate;
 use Zend\Mvc\Application as ZendApplication;
 use Zend\Mvc\MvcEvent;
+use Zend\Session\Config\SessionConfig;
 use Zend\Session\Container;
+use Zend\Session\SessionManager;
+use Zend\Validator\AbstractValidator;
 
 class MvcListeners extends AbstractListenerAggregate
 {
@@ -16,6 +21,14 @@ class MvcListeners extends AbstractListenerAggregate
      */
     public function attach(EventManagerInterface $events, $priority = 1)
     {
+        $this->listeners[] = $events->attach(
+            MvcEvent::EVENT_BOOTSTRAP,
+            [$this, 'bootstrapSession']
+        );
+        $this->listeners[] = $events->attach(
+            MvcEvent::EVENT_BOOTSTRAP,
+            [$this, 'bootstrapLocale']
+        );
         $this->listeners[] = $events->attach(
             MvcEvent::EVENT_ROUTE,
             [$this, 'redirectToInstallation']
@@ -44,6 +57,83 @@ class MvcListeners extends AbstractListenerAggregate
             MvcEvent::EVENT_ROUTE,
             [$this, 'checkExcessivePost']
         );
+        $this->listeners[] = $events->attach(
+            MvcEvent::EVENT_DISPATCH,
+            [$this, 'authorizeUserAgainstController']
+        );
+    }
+
+    /**
+     * Bootstrap the session manager.
+     *
+     * @param MvcEvent $event
+     */
+    public function bootstrapSession(MvcEvent $event)
+    {
+        $services = $event->getApplication()->getServiceManager();
+        $config = $services->get('Config');
+
+        $sessionConfig = new SessionConfig;
+        $defaultOptions = [
+            'name' => md5(OMEKA_PATH),
+            'cookie_httponly' => true,
+            'use_strict_mode' => true,
+            'use_only_cookies' => true,
+            'gc_maxlifetime' => 1209600,
+        ];
+        $userOptions = isset($config['session']['config']) ? $config['session']['config'] : [];
+        $sessionConfig->setOptions(array_merge($defaultOptions, $userOptions));
+
+        $sessionSaveHandler = null;
+        if (empty($config['session']['save_handler'])) {
+            $currentVersion = $services->get('Omeka\Settings')->get('version');
+            if (Comparator::greaterThanOrEqualTo($currentVersion, '0.4.1-alpha')) {
+                $sessionSaveHandler = new Db($services->get('Omeka\Connection'));
+            }
+        } else {
+            $sessionSaveHandler = $services->get($config['session']['save_handler']);
+        }
+
+        $sessionManager = new SessionManager($sessionConfig, null, $sessionSaveHandler, []);
+        Container::setDefaultManager($sessionManager);
+    }
+
+    /**
+     * Bootstrap the locale.
+     *
+     * Sets the runtime locale and translator language to the locale set by the
+     * logged-in user, the global settings, or the configuration file, in that
+     * order of priority.
+     *
+     * @param MvcEvent $event
+     */
+    public function bootstrapLocale(MvcEvent $event)
+    {
+        $services = $event->getApplication()->getServiceManager();
+        $auth = $services->get('Omeka\AuthenticationService');
+        $translator = $services->get('MvcTranslator');
+
+        $locale = null;
+        if ($auth->hasIdentity()) {
+            // User is logged in.
+            $userId = $auth->getIdentity()->getId();
+            $services->get('Omeka\Settings\User')->setTargetId($userId);
+            $locale = $services->get('Omeka\Settings\User')->get('locale');
+        }
+        if (!$locale) {
+            $locale = $services->get('Omeka\Settings')->get('locale');
+        }
+        if (!$locale) {
+            // The translator already loaded the configured locale.
+            $locale = $translator->getDelegatedTranslator()->getLocale();
+        }
+        if (extension_loaded('intl')) {
+            \Locale::setDefault($locale);
+        }
+        $translator->getDelegatedTranslator()->setLocale($locale);
+
+        // Enable automatic translation for validation error messages.
+        AbstractValidator::setDefaultTranslator($translator);
     }
 
     /**
@@ -249,10 +339,13 @@ class MvcListeners extends AbstractListenerAggregate
             }
         }
 
-        // Set the configured site locale to the translator.
-        $siteSettings = $services->get('Omeka\Settings\Site');
-        $locale = $siteSettings->get('locale');
+        // Set the runtime locale and translator language to the configured site
+        // locale.
+        $locale = $services->get('Omeka\Settings\Site')->get('locale');
         if ($locale) {
+            if (extension_loaded('intl')) {
+                \Locale::setDefault($locale);
+            }
             $services->get('MvcTranslator')->getDelegatedTranslator()->setLocale($locale);
         }
     }
@@ -311,5 +404,30 @@ class MvcListeners extends AbstractListenerAggregate
         $themeManager->setCurrentTheme($currentTheme);
 
         return $site;
+    }
+
+    /**
+     * Authorize the current user against the dispatched controller and action.
+     *
+     * @param MvcEvent $event
+     */
+    public function authorizeUserAgainstController(MvcEvent $event)
+    {
+        $services = $event->getApplication()->getServiceManager();
+        $t = $services->get('MvcTranslator');
+        $acl = $services->get('Omeka\Acl');
+
+        $routeMatch = $event->getRouteMatch();
+        $controller = $routeMatch->getParam('controller');
+        $action = $routeMatch->getParam('action');
+
+        if (!$acl->userIsAllowed($controller, $action)) {
+            $message = sprintf(
+                $t->translate('Permission denied for the current user to access the %1$s action of the %2$s controller.'),
+                $action,
+                $controller
+            );
+            throw new Exception\PermissionDeniedException($message);
+        }
     }
 }

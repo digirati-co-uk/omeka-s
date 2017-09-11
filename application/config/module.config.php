@@ -36,6 +36,12 @@ return [
         ],
     ],
     'temp_dir' => sys_get_temp_dir(),
+    'file_store' => [
+        'local' => [
+            'base_path' => null,
+            'base_uri' => null,
+        ],
+    ],
     'entity_manager' => [
         'is_dev_mode' => false,
         'mapping_classes_paths' => [
@@ -332,6 +338,7 @@ return [
             'mailer' => 'Omeka\Service\ControllerPlugin\MailerFactory',
             'settings' => 'Omeka\Service\ControllerPlugin\SettingsFactory',
             'siteSettings' => 'Omeka\Service\ControllerPlugin\SiteSettingsFactory',
+            'userSettings' => 'Omeka\Service\ControllerPlugin\UserSettingsFactory',
             'status' => 'Omeka\Service\ControllerPlugin\StatusFactory',
             'viewHelpers' => 'Omeka\Service\ControllerPlugin\ViewHelpersFactory',
         ],
@@ -381,6 +388,7 @@ return [
             'formAsset' => 'Omeka\Form\View\Helper\FormAsset',
             'themeSettingAssetUrl' => 'Omeka\View\Helper\ThemeSettingAssetUrl',
             'formColorPicker' => 'Omeka\Form\View\Helper\FormColorPicker',
+            'thumbnail' => 'Omeka\View\Helper\Thumbnail',
         ],
         'factories' => [
             'api' => 'Omeka\Service\ViewHelper\ApiFactory',
@@ -394,6 +402,7 @@ return [
             'pagination' => 'Omeka\Service\ViewHelper\PaginationFactory',
             'params' => 'Omeka\Service\ViewHelper\ParamsFactory',
             'setting' => 'Omeka\Service\ViewHelper\SettingFactory',
+            'userSetting' => 'Omeka\Service\ViewHelper\UserSettingFactory',
             'siteSetting' => 'Omeka\Service\ViewHelper\SiteSettingFactory',
             'themeSetting' => 'Omeka\Service\ViewHelper\ThemeSettingFactory',
             'trigger' => 'Omeka\Service\ViewHelper\TriggerFactory',
