@@ -1,8 +1,9 @@
 <?php
 return [
     'logger' => [
-        'log' => false,
+        'log' => true,
         'priority' => \Zend\Log\Logger::NOTICE,
+        'path' => __DIR__ .'/../logs/application.log',
     ],
     'http_client' => [
         'sslcapath' => null,
