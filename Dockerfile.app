@@ -1,5 +1,6 @@
 FROM php:7.1-fpm-jessie
 
+RUN usermod -u 1000 www-data
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
 RUN apt-get update && \
     apt-get install -y \

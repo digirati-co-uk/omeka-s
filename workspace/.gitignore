@@ -1,0 +1,4 @@
+!/modules/.gitkeep
+!/libraries/.gitkeep
+/modules/*
+/libraries/*

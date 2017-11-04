@@ -41,5 +41,6 @@ services:
       - ../modules:/srv/omeka/modules
       - ../themes:/srv/omeka/themes
       - ../application:/srv/omeka/application
-      - ../index.php:/srv/omeka/index.php
       - ../docker/config/app/database.ini:/srv/omeka/config/database.ini
+      - ../workspace:/srv/omeka/workspace
+      - ../vendor:/srv/omeka/vendor
