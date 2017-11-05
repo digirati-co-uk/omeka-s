@@ -9,7 +9,10 @@ services:
       - app:omeka_app
     ports:
       - "8888:80"
-
+    volumes:
+      - ../themes:/var/www/html/themes
+      - ../modules:/var/www/html/modules
+      - ../workspace:/var/www/html/workspace
   mysql:
     container_name: omeka_db
     image: mysql:5.7

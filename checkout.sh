@@ -4,36 +4,93 @@ echo "Checking for new modules"
 
 MODULES_INSTALLED=0
 
-while read -r ID PKG_NAME
+function __install_pkg_from_dir() {
+  if [ -z "$1" ]
+  then
+    echo "No package path given"
+    return 0
+  fi
+
+  if [ -z "$2" ]
+  then
+    echo "No package ID given"
+    return 0
+  fi
+
+  if [ -z "$3" ]
+  then
+    echo "No package branch given"
+    return 0
+  fi
+
+  PKG_PATH="$1"
+  ID="$2"
+  BRANCH="$3"
+  VERSION="$4"
+
+  COMPOSER_FILE="$PKG_PATH/composer.json"
+  PKG_NAME=$(jq -r '.name' < "$COMPOSER_FILE")
+
+  composer config "repositories.$ID" path "$PKG_PATH"
+
+  if [[ $(jq -r ".require[\"$PKG_NAME\"]" < "$(pwd)/composer.json") == "null" ]]; then
+    if [ -z "$VERSION" ]; then
+      composer require --prefer-source "$PKG_NAME:dev-$BRANCH"
+    else
+      composer require --prefer-source "$PKG_NAME:dev-$BRANCH as $VERSION"
+    fi
+  fi
+}
+
+while read -r REPO_ID TYPE VERSION
 do
-    MODULE_PATH="workspace/modules/$ID"
+  if [[ "$REPO_ID" != *"/"* ]];
+  then
+    ID="$REPO_ID"
+    REPO_URL="git@github.com:digirati-co-uk/$ID"
+  else
+    ID=$(echo "$REPO_ID" | cut -d '/' -f 2)
+    REPO_URL="git@github.com:$REPO_ID"
+  fi
 
-    if [ ! -d "$MODULE_PATH" ]; then
-        if [[ "$ID" != *"github.com"* ]]; then
-            git clone "git@github.com:digirati-co-uk/$ID" "$MODULE_PATH"
-        else
-            git clone "$ID" "$MODULE_PATH"
-        fi
-    fi
+  case "$TYPE" in
+    "library") PKG_PATH="workspace/libraries/$ID" ;;
+    "theme") PKG_PATH="workspace/themes/$ID" ;;
+    "module") PKG_PATH="workspace/modules/$ID" ;;
+    *) PKG_PATH="workspace/libraries/$ID" ;;
+  esac
 
-    BRANCH=$(git --git-dir="$MODULE_PATH/.git" rev-parse --abbrev-ref HEAD)
+  if [ ! -d "$PKG_PATH" ]
+  then
+    git clone "$REPO_URL" "$PKG_PATH"
+  fi
 
-    composer config "repositories.$ID" path "$MODULE_PATH"
+  BRANCH=$(git --git-dir="$PKG_PATH/.git" rev-parse --abbrev-ref HEAD)
 
-    if ! composer show --no-interaction  2>&1  | grep -q "$PKG_NAME"; then
-        composer require "$PKG_NAME" "dev-$BRANCH"
-        MODULES_INSTALLED=$((MODULES_INSTALLED + 1))
-    fi
+  if [ "$TYPE" == "theme" ];
+  then
+    THEME_SRC_DIR=$(find "$PKG_PATH/src/omeka/" -maxdepth 1 -mindepth 1 -type d)
+    __install_pkg_from_dir "$THEME_SRC_DIR/module" "$ID-module" "$BRANCH" "$VERSION"
+    __install_pkg_from_dir "$THEME_SRC_DIR/theme/" "$ID-theme" "$BRANCH" "$VERSION"
+  else
+    __install_pkg_from_dir "$PKG_PATH" "$ID" "$BRANCH" "$VERSION"
+  fi
 done <<- "EOF"
-    omeka-iiif-view-module digirati/omeka-iiif-view-module
-    omeka-iiif-import-module digirati/omeka-iiif-import-module
-    omeka-elucidate-module dlcs/omeka-elucidate-module
-    omeka-i18n-module digirati/omeka-i18n-module
-    omeka-annotation-studio-module digirati/omeka-annotation-studio-module
-    omeka-public-user-module digirati/omeka-public-user-module
-    omeka-web-hooks-module digirati/omeka-web-hooks-module
-    omeka-royal-society-db-module digirati/omeka-royal-society-db-module
-    omeka-elucidate-proxy-module digirati-co-uk/omeka-elucidate-proxy-module
+    omeka-iiif-view-module module
+    omeka-iiif-import-module module
+    omeka-elucidate-module module
+    omeka-i18n-module module
+    omeka-annotation-studio-module module
+    omeka-public-user-module module
+    omeka-web-hooks-module module
+    omeka-royal-society-db-module module
+    omeka-elucidate-proxy-module module
+    elucidate-php library 3.0.0
+    iiif-php library 1.1
+    nlw-frontend theme
+    rs-frontend theme
+    ida-frontend theme
+    garyttierney/w3c-annotations-php library
 EOF
 
 if [ $MODULES_INSTALLED -gt 0 ]; then

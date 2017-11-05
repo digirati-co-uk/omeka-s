@@ -1,4 +1,6 @@
 !/modules/.gitkeep
 !/libraries/.gitkeep
+!/themes/.gitkeep
 /modules/*
 /libraries/*
+/themes/*
