@@ -6,7 +6,8 @@ RUN apt-get update && \
     git \
     curl \
     zlib1g-dev \
-    libpcre3-dev
+    libpcre3-dev \
+    imagemagick
 
 # PHP configuration
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
@@ -16,8 +17,7 @@ RUN echo "date.timezone = "Europe/London"" >> /usr/local/etc/php/conf.d/php.ini 
     zip \
     pdo \
     pdo_mysql \
-    pcntl \
-    imagemagick
+    pcntl
 
 # Node JS.
 RUN curl -sL https://deb.nodesource.com/setup_7.x | bash -
