@@ -6,7 +6,8 @@ RUN apt-get update && \
     git \
     curl \
     zlib1g-dev \
-    libpcre3-dev
+    libpcre3-dev \
+    imagemagick
 
 # PHP configuration
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
