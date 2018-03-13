@@ -9,7 +9,8 @@ cd "$parent_path"
 
 DOCKER_USER='digirati'
 PACKAGE_NAME='omeka-s'
-PHP_VERSIONS=(7.0.18 7.1 5.6.30);
+# PHP_VERSIONS=(7.0.18 7.1 5.6.30);
+PHP_VERSIONS=(7.0.18 7.1);
 # WEB_SERVERS=(fpm apache);
 WEB_SERVERS=(fpm);
 
