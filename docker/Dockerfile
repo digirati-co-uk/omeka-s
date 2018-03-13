@@ -65,6 +65,8 @@ COPY ./docker/configs/server/scripts/runtime/${configureServer} \
 
 COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
 
+COPY ./docker/module.sh /usr/local/bin/module
+
 EXPOSE 80 443
 
 WORKDIR /var/www/html
@@ -80,8 +82,6 @@ RUN mkdir -p /var/log/omeka/ && \
     touch /var/log/omeka/debug.log && \
     chmod 755 /var/log/omeka/debug.log && \
     chmod -R 777 /var/www/html/files && \
-    ln -sf /dev/stdout /var/log/omeka/debug.log && \
-    git clone --single-branch --branch master https://$GH_ACCESS_TOKEN@github.com/digirati-co-uk/omeka-build-tools.git /tmp/omeka-build-tools && \
-    /tmp/omeka-build-tools/install
+    ln -sf /dev/stdout /var/log/omeka/debug.log
 
 CMD ["/runtime/${configureServer}"]
