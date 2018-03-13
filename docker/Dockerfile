@@ -5,8 +5,10 @@ RUN apt-get update && \
     apt-get install -y \
     git \
     curl \
+    jq \
     zlib1g-dev \
     libpcre3-dev \
+    vim \
     imagemagick
 
 # PHP configuration
@@ -17,7 +19,8 @@ RUN echo "date.timezone = "Europe/London"" >> /usr/local/etc/php/conf.d/php.ini 
     zip \
     pdo \
     pdo_mysql \
-    pcntl
+    pcntl \
+    opcache
 
 # Node JS.
 RUN curl -sL https://deb.nodesource.com/setup_7.x | bash -
@@ -49,7 +52,7 @@ ${copyConfiguration}
 
 # Application configuration
 RUN cd /var/www/html && \
-    composer install --no-autoloader --no-interaction
+    composer install --no-autoloader --no-interaction --optimize-autoloader
 
 COPY . /var/www/html
 
@@ -77,6 +80,8 @@ RUN mkdir -p /var/log/omeka/ && \
     touch /var/log/omeka/debug.log && \
     chmod 755 /var/log/omeka/debug.log && \
     chmod -R 777 /var/www/html/files && \
-    ln -sf /dev/stdout /var/log/omeka/debug.log
+    ln -sf /dev/stdout /var/log/omeka/debug.log && \
+    git clone --single-branch --branch master https://$GH_ACCESS_TOKEN@github.com/digirati-co-uk/omeka-build-tools.git /tmp/omeka-build-tools && \
+    /tmp/omeka-build-tools/install
 
 CMD ["/runtime/${configureServer}"]
