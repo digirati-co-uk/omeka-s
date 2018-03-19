@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 # PHP configuration
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer
-
+RUN curl -sS "https://curl.haxx.se/ca/cacert.pem" > /usr/lib/ssl/cert.pem
 RUN echo "date.timezone = "Europe/London"" >> /usr/local/etc/php/conf.d/php.ini && \
     docker-php-ext-install \
     zip \
