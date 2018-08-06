@@ -4,6 +4,7 @@ namespace Omeka;
 $reader = new \Zend\Config\Reader\Ini;
 return [
     'modules' => [
+        'ZfcTwig',
         'Zend\Form',
         'Zend\I18n',
         'Zend\Mvc\I18n',

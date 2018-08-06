@@ -31,13 +31,15 @@ class ResourceTemplateAdapter extends AbstractEntityAdapter
 
     public function sortQuery(QueryBuilder $qb, array $query)
     {
+        $entityAlias = $this->getEntityAlias();
+
         if (is_string($query['sort_by'])) {
             if ('resource_class_label' == $query['sort_by']) {
                 $resourceClassAlias = $this->createAlias();
                 $qb->leftJoin(
-                    'Omeka\Entity\ResourceTemplate.resourceClass',
+                    "$entityAlias.resourceClass",
                     $resourceClassAlias
-                )->addOrderBy("$resourceClassAlias.label", $query['sort_order']);
+                )->addOrderBy("$entityAlias.label", $query['sort_order']);
             } elseif ('item_count' == $query['sort_by']) {
                 $this->sortByCount($qb, $query, 'resources', 'Omeka\Entity\Item');
             } else {
@@ -48,9 +50,11 @@ class ResourceTemplateAdapter extends AbstractEntityAdapter
 
     public function buildQuery(QueryBuilder $qb, array $query)
     {
+        $entityAlias = $this->getEntityAlias();
+
         if (isset($query['label'])) {
             $qb->andWhere($qb->expr()->eq(
-                "Omeka\Entity\ResourceTemplate.label",
+                "$entityAlias.label",
                 $this->createNamedParameter($qb, $query['label']))
             );
         }
