@@ -176,7 +176,7 @@ return [
         ],
     ],
     'logger' => [
-        'log' => false,
+        'log' => true,
         'path' => OMEKA_PATH . '/logs/application.log',
         'priority' => \Zend\Log\Logger::NOTICE,
     ],

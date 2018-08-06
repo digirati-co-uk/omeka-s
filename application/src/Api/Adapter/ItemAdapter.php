@@ -50,8 +50,10 @@ class ItemAdapter extends AbstractResourceEntityAdapter
     {
         parent::buildQuery($qb, $query);
 
+        $entityAlias = $this->getEntityAlias();
+
         if (isset($query['id'])) {
-            $qb->andWhere($qb->expr()->eq('Omeka\Entity\Item.id', $query['id']));
+            $qb->andWhere($qb->expr()->eq("$entityAlias.id", $query['id']));
         }
 
         if (isset($query['item_set_id'])) {
@@ -64,7 +66,7 @@ class ItemAdapter extends AbstractResourceEntityAdapter
             if ($itemSets) {
                 $itemSetAlias = $this->createAlias();
                 $qb->innerJoin(
-                    $this->getEntityClass() . '.itemSets',
+                    "$entityAlias.itemSets",
                     $itemSetAlias, 'WITH',
                     $qb->expr()->in("$itemSetAlias.id", $this->createNamedParameter($qb, $itemSets))
                 );
@@ -90,7 +92,7 @@ class ItemAdapter extends AbstractResourceEntityAdapter
             if (isset($query['site_attachments_only']) && $query['site_attachments_only']) {
                 $siteBlockAttachmentsAlias = $this->createAlias();
                 $qb->innerJoin(
-                    'Omeka\Entity\Item.siteBlockAttachments',
+                    "$entityAlias.siteBlockAttachments",
                     $siteBlockAttachmentsAlias
                 );
                 $sitePageBlockAlias = $this->createAlias();

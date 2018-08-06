@@ -51,7 +51,7 @@ class PropertyAdapter extends AbstractEntityAdapter
     {
         if (is_string($query['sort_by'])) {
             if ('item_count' == $query['sort_by']) {
-                $entityAlias = $this->getEntityClass();
+                $entityAlias = $this->getEntityAlias();
                 $valuesAlias = $this->createAlias();
                 $resourceAlias = $this->createAlias();
                 $countAlias = $this->createAlias();
@@ -93,10 +93,11 @@ class PropertyAdapter extends AbstractEntityAdapter
      */
     public function buildQuery(QueryBuilder $qb, array $query)
     {
+        $entityAlias = $this->getEntityAlias();
         if (isset($query['owner_id'])) {
             $userAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Property.owner',
+                "$entityAlias.owner",
                 $userAlias
             );
             $qb->andWhere($qb->expr()->eq(
@@ -107,7 +108,7 @@ class PropertyAdapter extends AbstractEntityAdapter
         if (isset($query['vocabulary_id'])) {
             $vocabularyAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Property.vocabulary',
+                "$entityAlias.vocabulary",
                 $vocabularyAlias
             );
             $qb->andWhere($qb->expr()->eq(
@@ -118,7 +119,7 @@ class PropertyAdapter extends AbstractEntityAdapter
         if (isset($query['vocabulary_namespace_uri'])) {
             $vocabularyAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Property.vocabulary',
+                "$entityAlias.vocabulary",
                 $vocabularyAlias
             );
             $qb->andWhere($qb->expr()->eq(
@@ -129,7 +130,7 @@ class PropertyAdapter extends AbstractEntityAdapter
         if (isset($query['vocabulary_prefix'])) {
             $vocabularyAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Property.vocabulary',
+                "$entityAlias.vocabulary",
                 $vocabularyAlias
             );
             $qb->andWhere($qb->expr()->eq(
@@ -140,7 +141,7 @@ class PropertyAdapter extends AbstractEntityAdapter
 
         if (isset($query['local_name'])) {
             $qb->andWhere($qb->expr()->eq(
-                "Omeka\Entity\Property.localName",
+                "$entityAlias.localName",
                 $this->createNamedParameter($qb, $query['local_name']))
             );
         }
@@ -148,7 +149,7 @@ class PropertyAdapter extends AbstractEntityAdapter
             list($prefix, $localName) = explode(':', $query['term']);
             $vocabularyAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Property.vocabulary',
+                "$entityAlias.vocabulary",
                 $vocabularyAlias
             );
             $qb->andWhere($qb->expr()->eq(
@@ -156,7 +157,7 @@ class PropertyAdapter extends AbstractEntityAdapter
                 $this->createNamedParameter($qb, $prefix))
             );
             $qb->andWhere($qb->expr()->eq(
-                "Omeka\Entity\Property.localName",
+                "$entityAlias.localName",
                 $this->createNamedParameter($qb, $localName))
             );
         }

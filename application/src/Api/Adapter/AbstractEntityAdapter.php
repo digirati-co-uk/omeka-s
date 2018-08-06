@@ -108,7 +108,7 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
             && array_key_exists($query['sort_by'], $this->sortFields)
         ) {
             $sortBy = $this->sortFields[$query['sort_by']];
-            $qb->addOrderBy($this->getEntityClass() . ".$sortBy", $query['sort_order']);
+            $qb->addOrderBy($this->getEntityAlias() . ".$sortBy", $query['sort_order']);
         }
     }
 
@@ -124,7 +124,7 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
     public function sortByCount(QueryBuilder $qb, array $query,
         $inverseField, $instanceOf = null
     ) {
-        $entityAlias = $this->getEntityClass();
+        $entityAlias = $this->getEntityAlias();
         $inverseAlias = $this->createAlias();
         $countAlias = $this->createAlias();
 
@@ -200,13 +200,15 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
 
         // Begin building the search query.
         $entityClass = $this->getEntityClass();
+        $entityClassAlias = str_replace('\\', '_', $entityClass);
+
         $this->index = 0;
         $qb = $this->getEntityManager()
             ->createQueryBuilder()
-            ->select($entityClass)
-            ->from($entityClass, $entityClass);
+            ->select($entityClassAlias)
+            ->from($entityClass, $entityClassAlias);
         $this->buildQuery($qb, $query);
-        $qb->groupBy("$entityClass.id");
+        $qb->groupBy("$entityClassAlias.id");
 
         // Trigger the search.query event.
         $event = new Event('api.search.query', $this, [
@@ -219,7 +221,7 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
         // adapters add, always sort by entity ID.
         $this->sortQuery($qb, $query);
         $this->limitQuery($qb, $query);
-        $qb->addOrderBy("$entityClass.id", $query['sort_order']);
+        $qb->addOrderBy("$entityClassAlias.id", $query['sort_order']);
 
         $scalarField = $request->getOption('returnScalar');
         if ($scalarField) {
@@ -230,7 +232,7 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
                     $scalarField, $entityClass
                 ));
             }
-            $qb->select(sprintf('%s.%s', $entityClass, $scalarField));
+            $qb->select(sprintf('%s.%s', $entityClassAlias, $scalarField));
             $content = array_column($qb->getQuery()->getScalarResult(), $scalarField);
             $response = new Response($content);
             $response->setTotalResults(count($content));
@@ -609,12 +611,13 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
         }
 
         $entityClass = $this->getEntityClass();
+        $entityAlias = str_replace('\\', '_', $entityClass);
         $this->index = 0;
         $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb->select($entityClass)->from($entityClass, $entityClass);
+        $qb->select($entityAlias)->from($entityClass, $entityAlias);
         foreach ($criteria as $field => $value) {
             $qb->andWhere($qb->expr()->eq(
-                "$entityClass.$field",
+                "$entityAlias.$field",
                 $this->createNamedParameter($qb, $value)
             ));
         }
@@ -837,5 +840,13 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
         }
 
         $entity->setModified(new DateTime('now'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntityAlias()
+    {
+        return str_replace('\\', '_', $this->getEntityClass());
     }
 }
