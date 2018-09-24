@@ -55,17 +55,17 @@ class MediaAdapter extends AbstractResourceEntityAdapter
         parent::buildQuery($qb, $query);
 
         if (isset($query['id'])) {
-            $qb->andWhere($qb->expr()->eq('Omeka\Entity\Media.id', $query['id']));
+            $qb->andWhere($qb->expr()->eq($this->getEntityAlias() . '.id', $query['id']));
         }
 
         if (isset($query['item_id'])) {
-            $qb->andWhere($qb->expr()->eq('Omeka\Entity\Media.item', $query['item_id']));
+            $qb->andWhere($qb->expr()->eq($this->getEntityAlias() . '.item', $query['item_id']));
         }
 
         if (isset($query['site_id'])) {
             $itemAlias = $this->createAlias();
             $qb->innerJoin(
-                'Omeka\Entity\Media.item',
+                $this->getEntityAlias() . '.item',
                 $itemAlias
             );
             $siteBlockAttachmentsAlias = $this->createAlias();
