@@ -591,9 +591,11 @@ abstract class AbstractEntityAdapter extends AbstractAdapter implements EntityAd
 
         $entityClass = $this->getEntityClass();
         $entityAlias = str_replace('\\', '_', $entityClass);
+
         $this->index = 0;
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->select($entityAlias)->from($entityClass, $entityAlias);
+
         foreach ($criteria as $field => $value) {
             $qb->andWhere($qb->expr()->eq(
                 "$entityAlias.$field",
