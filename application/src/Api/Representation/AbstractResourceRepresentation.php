@@ -175,10 +175,12 @@ abstract class AbstractResourceRepresentation extends AbstractRepresentation
         $routeMatch = $this->getServiceLocator()->get('Application')
             ->getMvcEvent()->getRouteMatch();
         $url = null;
-        if ($routeMatch->getParam('__ADMIN__')) {
-            $url = $this->adminUrl($action, $canonical);
-        } elseif ($routeMatch->getParam('__SITE__')) {
-            $url = $this->siteUrl($routeMatch->getParam('site-slug'), $canonical);
+        if ($routeMatch) {
+            if ($routeMatch->getParam('__ADMIN__')) {
+                $url = $this->adminUrl($action, $canonical);
+            } elseif ($routeMatch->getParam('__SITE__')) {
+                $url = $this->siteUrl($routeMatch->getParam('site-slug'), $canonical);
+            }
         }
         return $url;
     }
