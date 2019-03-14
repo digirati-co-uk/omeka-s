@@ -177,7 +177,7 @@ abstract class AbstractResourceRepresentation extends AbstractRepresentation
         $url = null;
         if ($status->isAdminRequest()) {
             $url = $this->adminUrl($action, $canonical);
-        } elseif ($status->isSiteRequest()) {
+        } elseif ($status->isSiteRequest() && $routeMatch) {
             $url = $this->siteUrl($routeMatch->getParam('site-slug'), $canonical);
         }
         return $url;
