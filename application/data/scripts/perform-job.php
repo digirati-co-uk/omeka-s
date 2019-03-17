@@ -2,7 +2,33 @@
 /**
  * Perform a job.
  */
+
 use Omeka\Entity\Job;
+
+$lock = null;
+
+function waitForLock(&$lock)
+{
+    $tempLockFile = '/tmp/omeka-lock.txt';
+    if (!is_file($tempLockFile)) {
+        file_put_contents($tempLockFile, '');
+    }
+    $lock = fopen($tempLockFile, "r+");
+    if (flock($lock, LOCK_EX)) {
+        return true;
+    }
+    fclose($lock);
+    $lock = null;
+
+    return false;
+}
+
+error_log('Starting lock waiting.');
+
+while (!waitForLock($lock)) {
+    error_log(getmypid() . ': Waiting for lock... ');
+    sleep(10);
+}
 
 require dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 
@@ -44,3 +70,6 @@ $serviceLocator->get('Omeka\Job\Dispatcher')->send($job, $strategy);
 
 $job->setPid(null);
 $entityManager->flush();
+
+flock($lock, LOCK_UN);
+fclose($lock);
